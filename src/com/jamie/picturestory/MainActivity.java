@@ -100,13 +100,7 @@ public class MainActivity extends FragmentActivity {
 			
 			@Override
 			public void onClick(View v) {
-				onPlay(mStartPlaying);
-                if (mStartPlaying) {
-                    mPlayButton.setText("Stop playing");
-                } else {
-                    mPlayButton.setText("Start playing");
-                }
-                mStartPlaying = !mStartPlaying;
+				togglePlayback();
 			}
 		});
         
@@ -115,13 +109,7 @@ public class MainActivity extends FragmentActivity {
 			
 			@Override
 			public void onClick(View v) {
-				onRecord(mStartRecording);
-                if (mStartRecording) {
-                    mRecordButton.setText("Stop recording");
-                } else {
-                    mRecordButton.setText("Start recording");
-                }
-                mStartRecording = !mStartRecording;				
+				toggleRecording();	
 			}
 		});
         
@@ -177,28 +165,39 @@ public class MainActivity extends FragmentActivity {
     	return mImageWorker;
     }
 
-    private void onRecord(boolean start) {
-        if (start) {
+    private void toggleRecording() {
+        if (mStartRecording) {
             startRecording();
         } else {
             stopRecording();
         }
+        mStartRecording = !mStartRecording;
     }
 
-    private void onPlay(boolean start) {
-        if (start) {
+    private void togglePlayback() {
+        if (mStartPlaying) {
             startPlaying();
         } else {
             stopPlaying();
         }
+        mStartPlaying = !mStartPlaying;
     }
 
     private void startPlaying() {
         mPlayer = new MediaPlayer();
         try {
             mPlayer.setDataSource(mFileName);
+            mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+				
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					togglePlayback();				
+				}
+			});
             mPlayer.prepare();
             mPlayer.start();
+            
+            mPlayButton.setText("Stop playing");
         } catch (IOException e) {
             Log.e(TAG, "prepare() failed");
         }
@@ -207,6 +206,7 @@ public class MainActivity extends FragmentActivity {
     private void stopPlaying() {
         mPlayer.release();
         mPlayer = null;
+        mPlayButton.setText("Start playing");
     }
 
     private void startRecording() {    	
@@ -223,12 +223,16 @@ public class MainActivity extends FragmentActivity {
         }
 
         mRecorder.start();
+        
+        mRecordButton.setText("Stop recording");
     }
 
     private void stopRecording() {
         mRecorder.stop();
         mRecorder.release();
         mRecorder = null;
+        
+        mRecordButton.setText("Start recording");
     }
     
     private void openImageIntent() {
