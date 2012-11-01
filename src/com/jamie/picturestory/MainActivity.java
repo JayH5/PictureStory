@@ -37,7 +37,7 @@ public class MainActivity extends FragmentActivity {
 	private ListPagerAdapter mAdapter;
 	private ImageResizer mImageWorker;
 	
-	private Button mButton;
+	private Button mAddImageButton;
 	
 	// Audio record class variables
     private static String mFileName = null;
@@ -53,17 +53,21 @@ public class MainActivity extends FragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE); // Remove action bar / title
         setContentView(R.layout.main);
 		
+        // Get the display size so we can resize images
 		final DisplayMetrics displayMetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         final int height = displayMetrics.heightPixels;
         final int width = displayMetrics.widthPixels;
         
+        // Create the image worker that fetches and processes images
         mImageWorker = new ImageResizer(this, height, width);
         mImageWorker.setImageCache(ImageCache.findOrCreateCache(this, IMAGE_CACHE_DIR));
         
+        // Check for any saved instance state data so we can restore the app after
+        // configuration change (like rotation).
         if (savedInstanceState != null) {
         	ArrayList<Uri> pageUris = savedInstanceState.getParcelableArrayList(SAVE_STATE_KEY);
         	mAdapter = new ListPagerAdapter(pageUris, getSupportFragmentManager());
@@ -71,12 +75,13 @@ public class MainActivity extends FragmentActivity {
         	mAdapter = new ListPagerAdapter(getSupportFragmentManager());
         }
         
+        // Create the viewpager and set its adapter
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
         mPager.setPageMargin((int) getResources().getDimension(R.dimen.pager_margin));
         
-        mButton = (Button) findViewById(R.id.button);
-        mButton.setOnClickListener(new View.OnClickListener() {
+        mAddImageButton = (Button) findViewById(R.id.addImagebutton);
+        mAddImageButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -84,9 +89,12 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
         
+        // Set the file path for audio record file
+        // TODO: Do this properly, add a path specific to the app
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
         mFileName += "/audiorecordtest.3gp";
         
+        // Add audio buttons
         mPlayButton = (Button) findViewById(R.id.playButton);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
 			
@@ -144,11 +152,12 @@ public class MainActivity extends FragmentActivity {
         super.onSaveInstanceState(outState);
     }
     
+    // We must release the recorder and the player upon exiting the app
     @Override
     public void onPause() {
         super.onPause();
         if (mRecorder != null) {
-            mRecorder.release(); // Must release the recorder
+            mRecorder.release();
             mRecorder = null;
         }
 
