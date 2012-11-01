@@ -7,14 +7,41 @@
         android:id="@+id/pager"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_above="@+id/button" />
+        android:layout_above="@+id/bottom_button_bar" />
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:text="Add image" />
+	<LinearLayout
+	    android:id="@+id/bottom_button_bar"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentBottom="true"
+	    android:layout_alignParentLeft="true"
+	    android:orientation="horizontal" >
+	    
+	    <Button
+        	android:id="@+id/button"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_gravity="center_vertical"
+    	    android:layout_weight="1"
+        	android:text="Add image" />
+	    
+	    <Button
+        	android:id="@+id/playButton"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_gravity="center_vertical"
+    	    android:layout_weight="1"
+        	android:text="Play" />
+	    
+	    <Button
+        	android:id="@+id/recordButton"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_gravity="center_vertical"
+    	    android:layout_weight="1"
+        	android:text="Record" />
+	    
+	</LinearLayout>
+   
 
 </RelativeLayout>

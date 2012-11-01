@@ -1,11 +1,14 @@
 package com.jamie.picturestory;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -29,11 +32,23 @@ public class MainActivity extends FragmentActivity {
 	private static final String SAVE_STATE_KEY = "Uris";
 	private static final int IMAGE_PICK = 0;
 	
+	// Viepager and image class variables
 	private ViewPager mPager;
 	private ListPagerAdapter mAdapter;
 	private ImageResizer mImageWorker;
 	
 	private Button mButton;
+	
+	// Audio record class variables
+    private static String mFileName = null;
+
+    private Button mRecordButton;
+    private boolean mStartRecording = true;
+    private MediaRecorder mRecorder = null;
+
+    private Button mPlayButton;
+    private boolean mStartPlaying = true;
+    private MediaPlayer mPlayer = null;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +70,7 @@ public class MainActivity extends FragmentActivity {
         } else {
         	mAdapter = new ListPagerAdapter(getSupportFragmentManager());
         }
+        
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
         mPager.setPageMargin((int) getResources().getDimension(R.dimen.pager_margin));
@@ -65,6 +81,39 @@ public class MainActivity extends FragmentActivity {
 			@Override
 			public void onClick(View v) {
 				openImageIntent();
+			}
+		});
+        
+        mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+        mFileName += "/audiorecordtest.3gp";
+        
+        mPlayButton = (Button) findViewById(R.id.playButton);
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				onPlay(mStartPlaying);
+                if (mStartPlaying) {
+                    mPlayButton.setText("Stop playing");
+                } else {
+                    mPlayButton.setText("Start playing");
+                }
+                mStartPlaying = !mStartPlaying;
+			}
+		});
+        
+        mRecordButton = (Button) findViewById(R.id.recordButton);
+        mRecordButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				onRecord(mStartRecording);
+                if (mStartRecording) {
+                    mRecordButton.setText("Stop recording");
+                } else {
+                    mRecordButton.setText("Start recording");
+                }
+                mStartRecording = !mStartRecording;				
 			}
 		});
         
@@ -94,6 +143,20 @@ public class MainActivity extends FragmentActivity {
     	outState.putParcelableArrayList(SAVE_STATE_KEY, mAdapter.getPageUris());
         super.onSaveInstanceState(outState);
     }
+    
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mRecorder != null) {
+            mRecorder.release(); // Must release the recorder
+            mRecorder = null;
+        }
+
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -103,6 +166,60 @@ public class MainActivity extends FragmentActivity {
     
     public ImageWorker getImageWorker() {
     	return mImageWorker;
+    }
+
+    private void onRecord(boolean start) {
+        if (start) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    }
+
+    private void onPlay(boolean start) {
+        if (start) {
+            startPlaying();
+        } else {
+            stopPlaying();
+        }
+    }
+
+    private void startPlaying() {
+        mPlayer = new MediaPlayer();
+        try {
+            mPlayer.setDataSource(mFileName);
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (IOException e) {
+            Log.e(TAG, "prepare() failed");
+        }
+    }
+
+    private void stopPlaying() {
+        mPlayer.release();
+        mPlayer = null;
+    }
+
+    private void startRecording() {    	
+        mRecorder = new MediaRecorder();
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mRecorder.setOutputFile(mFileName);
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            mRecorder.prepare();
+        } catch (IOException e) {
+            Log.e(TAG, "prepare() failed");
+        }
+
+        mRecorder.start();
+    }
+
+    private void stopRecording() {
+        mRecorder.stop();
+        mRecorder.release();
+        mRecorder = null;
     }
     
     private void openImageIntent() {
