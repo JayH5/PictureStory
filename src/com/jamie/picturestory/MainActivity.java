@@ -1,54 +1,73 @@
 package com.jamie.picturestory;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 public class MainActivity extends FragmentActivity {
 	private static final String TAG = "MainActivity";
+	
 	private static final String IMAGE_CACHE_DIR = "images";
-	private static final String SAVE_STATE_KEY = "Uris";
+	
+	private static final String SAVE_URIS_KEY = "Uris";
+	private static final String SAVE_AUDIO_PATH_KEY = "Audio path";
+	private static final String SAVE_MODE_KEY = "Mode";
+	private static final String SAVE_TRANSITIONS_KEY = "Transitions";
+	private static final String SAVE_CAMERA_URI = "Camera Uri";
+	
 	private static final int IMAGE_PICK = 0;
 	
-	// Viepager and image class variables
+	// Viewpager and image class variables
 	private ViewPager mPager;
 	private ListPagerAdapter mAdapter;
 	private ImageResizer mImageWorker;
 	
-	private Button mAddImageButton;
+	private int mMode;
+	
+	private LinearLayout mImagesButtonBar;
+	private ImageButton mCompleteImagesButton;
+	private ImageButton mAddImageButton;
+	private ImageButton mRemoveImageButton;
+	
+	private LinearLayout mAudioButtonBar;
+	private ImageButton mEditImagesButton;
+	private ImageButton mPlayButton;
+	private ImageButton mRecordButton;
+	
+	private ProgressBar mRecordIndicator;
+	private ProgressBar mPlayIndicator;
+	
+	// Story transition recording
+	private ArrayList<StoryTransition> mStoryTransitions;
+	private MilliTimer mTimer;
+	private Handler mHandler;
 	
 	// Audio record class variables
-    private static String mFileName = null;
-
-    private Button mRecordButton;
+	private String mAudioFilePath;
+	
     private boolean mStartRecording = true;
     private MediaRecorder mRecorder = null;
 
-    private Button mPlayButton;
     private boolean mStartPlaying = true;
     private MediaPlayer mPlayer = null;
+    
+    private String mLastCameraUri = "";
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,18 +88,61 @@ public class MainActivity extends FragmentActivity {
         // Check for any saved instance state data so we can restore the app after
         // configuration change (like rotation).
         if (savedInstanceState != null) {
-        	ArrayList<Uri> pageUris = savedInstanceState.getParcelableArrayList(SAVE_STATE_KEY);
+        	ArrayList<Uri> pageUris = savedInstanceState.getParcelableArrayList(SAVE_URIS_KEY);
         	mAdapter = new ListPagerAdapter(pageUris, getSupportFragmentManager());
+        	mAudioFilePath = savedInstanceState.getString(SAVE_AUDIO_PATH_KEY);
+        	mMode = savedInstanceState.getInt(SAVE_MODE_KEY);
+        	mStoryTransitions = savedInstanceState.getParcelableArrayList(SAVE_TRANSITIONS_KEY);
+        	mLastCameraUri = savedInstanceState.getString(SAVE_CAMERA_URI);
         } else {
         	mAdapter = new ListPagerAdapter(getSupportFragmentManager());
+        	mAudioFilePath = Utils.getOutputAudioFilePath(getApplicationContext());
+        	mMode = 0;
         }
         
         // Create the viewpager and set its adapter
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
         mPager.setPageMargin((int) getResources().getDimension(R.dimen.pager_margin));
+        mPager.setOnPageChangeListener( new ViewPager.SimpleOnPageChangeListener() {
+        	
+        	@Override
+        	public void onPageSelected(int position) {
+        		if (!mStartRecording) { // If we're recording
+        			mStoryTransitions.add(new StoryTransition(position, mTimer.getTime()));
+        		}
+            	//Log.d(TAG, "Pager position: " + position + ", at time: " + System.currentTimeMillis());
+            }
+        });
         
-        mAddImageButton = (Button) findViewById(R.id.addImagebutton);
+        // All the UI elements
+        mImagesButtonBar = (LinearLayout) findViewById(R.id.images_button_bar);
+        mAudioButtonBar = (LinearLayout) findViewById(R.id.audio_button_bar);
+        
+        switch(mMode) {
+        case 0:
+        	mImagesButtonBar.setVisibility(View.VISIBLE);
+        	mAudioButtonBar.setVisibility(View.INVISIBLE);
+        	break;
+        case 1:
+        	mImagesButtonBar.setVisibility(View.INVISIBLE);
+        	mAudioButtonBar.setVisibility(View.VISIBLE);
+        	break;
+        default:
+        	// Shouldn't happen
+        	mMode = 0;
+        }
+        
+        mCompleteImagesButton = (ImageButton) findViewById(R.id.complete_images_button);
+        mCompleteImagesButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				toggleMode();
+			}
+		});
+        
+        mAddImageButton = (ImageButton) findViewById(R.id.add_image_button);
         mAddImageButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
@@ -89,13 +151,31 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
         
-        // Set the file path for audio record file
-        // TODO: Do this properly, add a path specific to the app
-        mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        mFileName += "/audiorecordtest.3gp";
+        mRemoveImageButton = (ImageButton) findViewById(R.id.remove_image_button);
+        mRemoveImageButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				removeCurrentItem();				
+			}
+		});
+        
+        if (mAdapter.getCount() == 0) {
+        	mRemoveImageButton.setEnabled(false);
+        }
         
         // Add audio buttons
-        mPlayButton = (Button) findViewById(R.id.playButton);
+        
+        mEditImagesButton = (ImageButton) findViewById(R.id.edit_images_button);
+        mEditImagesButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				toggleMode();
+			}
+		});
+        
+        mPlayButton = (ImageButton) findViewById(R.id.play_button);
         mPlayButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
@@ -104,7 +184,7 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
         
-        mRecordButton = (Button) findViewById(R.id.recordButton);
+        mRecordButton = (ImageButton) findViewById(R.id.record_button);
         mRecordButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
@@ -113,6 +193,38 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
         
+        mRecordIndicator = (ProgressBar) findViewById(R.id.record_indicator);
+        mPlayIndicator = (ProgressBar) findViewById(R.id.play_indicator);
+        
+    }
+    
+    private void removeCurrentItem() {
+    	int position = mPager.getCurrentItem();
+    	if (position > 0) {
+    		mPager.setCurrentItem(position - 1, true);
+    	}
+    	mAdapter.removeItem(position);
+    	if (mAdapter.getCount() == 0) {
+    		mRemoveImageButton.setEnabled(false);
+    	}
+    }
+    
+    private void toggleMode() {
+    	switch(mMode) {
+        case 0:
+        	mImagesButtonBar.setVisibility(View.INVISIBLE);
+        	mAudioButtonBar.setVisibility(View.VISIBLE);
+        	mMode = 1;
+        	break;
+        case 1:
+        	mImagesButtonBar.setVisibility(View.VISIBLE);
+        	mAudioButtonBar.setVisibility(View.INVISIBLE);
+        	mMode = 0;
+        	break;
+        default:
+        	// Shouldn't happen
+        	mMode = 0;
+        }
     }
     
     @Override
@@ -121,12 +233,14 @@ public class MainActivity extends FragmentActivity {
 
     	if (requestCode == IMAGE_PICK) {
         	if(resultCode == RESULT_OK) {
-        		Uri selectedImage = imageReturnedIntent.getData();
-	
-        	    Log.d(TAG, "Intent returned uri: " + selectedImage);
-
-        	    mAdapter.addItem(mAdapter.getCount(), selectedImage);
-        	    mAdapter.notifyDataSetChanged();
+        		
+        		if (imageReturnedIntent != null) {
+        			Uri selectedImage = imageReturnedIntent.getData();
+	       			mAdapter.addItem(mAdapter.getCount(), selectedImage);
+        		} else { // The camera is silly and returns a null URI
+        			mAdapter.addItem(mAdapter.getCount(), Uri.parse(mLastCameraUri));
+        		}
+        		mRemoveImageButton.setEnabled(true);
         	} else if (resultCode == RESULT_CANCELED) {
         		// Do nothing?
         	}
@@ -136,11 +250,16 @@ public class MainActivity extends FragmentActivity {
     
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-    	outState.putParcelableArrayList(SAVE_STATE_KEY, mAdapter.getPageUris());
+    	outState.putParcelableArrayList(SAVE_URIS_KEY, mAdapter.getPageUris());
+    	outState.putString(SAVE_AUDIO_PATH_KEY, mAudioFilePath);
+    	outState.putInt(SAVE_MODE_KEY, mMode);
+    	outState.putParcelableArrayList(SAVE_TRANSITIONS_KEY, mStoryTransitions);
+    	outState.putString(SAVE_CAMERA_URI, mLastCameraUri);
         super.onSaveInstanceState(outState);
     }
     
-    // We must release the recorder and the player upon exiting the app
+    // We must release the recorder and the player upon exiting the app 
+    // Also, remove all runnables in the handler
     @Override
     public void onPause() {
         super.onPause();
@@ -153,12 +272,9 @@ public class MainActivity extends FragmentActivity {
             mPlayer.release();
             mPlayer = null;
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+        if (mHandler != null) {
+        	mHandler.removeCallbacks(null);
+        }
     }
     
     public ImageWorker getImageWorker() {
@@ -186,7 +302,7 @@ public class MainActivity extends FragmentActivity {
     private void startPlaying() {
         mPlayer = new MediaPlayer();
         try {
-            mPlayer.setDataSource(mFileName);
+            mPlayer.setDataSource(mAudioFilePath);
             mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 				
 				@Override
@@ -197,23 +313,55 @@ public class MainActivity extends FragmentActivity {
             mPlayer.prepare();
             mPlayer.start();
             
-            mPlayButton.setText("Stop playing");
+            startTransitions();
+            
+            mPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.av_stop));
+            mPlayButton.setContentDescription(getResources().getString(R.string.started_play_button_text));
+            
+            mPlayIndicator.setVisibility(View.VISIBLE);
         } catch (IOException e) {
             Log.e(TAG, "prepare() failed");
+        }
+    }
+    
+    private void startTransitions() {
+    	// Move to the first page
+    	int firstPage = mStoryTransitions.get(0).getPosition();
+    	mPager.setCurrentItem(firstPage, true);
+    	
+    	// Queue all the transitions in a handler
+    	mHandler = new Handler();
+        for (int i = 1; i < mStoryTransitions.size(); i++) {
+        	final StoryTransition transition = mStoryTransitions.get(i);
+        	Runnable runner = new Runnable() {
+        		public void run() {
+        			mPager.setCurrentItem(transition.getPosition(), true);
+        		}
+        	};
+        	mHandler.postDelayed(runner, transition.getTime());
         }
     }
 
     private void stopPlaying() {
         mPlayer.release();
         mPlayer = null;
-        mPlayButton.setText("Start playing");
+        
+        // Stop any transitions
+        if (mHandler != null) {
+        	mHandler.removeCallbacks(null);
+        }
+        
+        mPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.av_play));
+        mPlayButton.setContentDescription(getResources().getString(R.string.stopped_play_button_text));
+        
+        mPlayIndicator.setVisibility(View.INVISIBLE);
     }
 
-    private void startRecording() {    	
-        mRecorder = new MediaRecorder();
+    private void startRecording() {
+    	mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mRecorder.setOutputFile(mFileName);
+        mRecorder.setOutputFile(mAudioFilePath);
         mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
         try {
@@ -224,7 +372,16 @@ public class MainActivity extends FragmentActivity {
 
         mRecorder.start();
         
-        mRecordButton.setText("Stop recording");
+        mTimer = new MilliTimer();
+        mStoryTransitions = new ArrayList<StoryTransition>();
+        mStoryTransitions.add(new StoryTransition(mPager.getCurrentItem(), 0));
+        
+        mRecordButton.setImageDrawable(getResources().getDrawable(R.drawable.av_stop));
+        mRecordButton.setContentDescription(getResources().getString(R.string.started_record_button_text));
+        
+        mRecordIndicator.setVisibility(View.VISIBLE);
+        
+        mPlayButton.setEnabled(false);
     }
 
     private void stopRecording() {
@@ -232,15 +389,21 @@ public class MainActivity extends FragmentActivity {
         mRecorder.release();
         mRecorder = null;
         
-        mRecordButton.setText("Start recording");
+        mRecordButton.setImageDrawable(getResources().getDrawable(R.drawable.device_access_mic));
+        mRecordButton.setContentDescription(getResources().getString(R.string.stopped_record_button_text));
+        
+        mRecordIndicator.setVisibility(View.INVISIBLE);
+        
+        mPlayButton.setEnabled(true);
     }
     
     private void openImageIntent() {
         // Camera intent
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        Uri fileUri = getOutputPhotoFileUri(); // create a file to save the image
-        Log.d(TAG, "Camera intent uri: " + fileUri);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+        Uri photoUri = Utils.getOutputPhotoFileUri(); // create a file to save the image
+        //Log.d(TAG, "Camera intent uri: " + fileUri);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+        mLastCameraUri = photoUri.toString();
         
         // Gallery intent
         Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -253,70 +416,4 @@ public class MainActivity extends FragmentActivity {
         // Launch the intent
         startActivityForResult(chooserIntent, IMAGE_PICK);
     }
-
-    /** Create a File for saving an image or video */
-    private static Uri getOutputPhotoFileUri(){
-    	// TODO: Check that the SDCard is mounted using Environment.getExternalStorageState().
-
-    	File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-    				Environment.DIRECTORY_PICTURES), "PictureStory");
-    	
-    	// Create the storage directory if it does not exist
-    	if (!mediaStorageDir.exists()) {
-    		if (!mediaStorageDir.mkdirs()) { // Media storage directory made -here-
-    			Log.e(TAG, "failed to create directory");
-    			return null;
-    		}
-    	}
-
-    	// Create a media file name
-    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-    	File mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
-
-    	return Uri.fromFile(mediaFile);
-    }
-    
-    private class ListPagerAdapter extends FragmentStatePagerAdapter {
-		private ArrayList<Uri> mPageUris;
-		
-		ListPagerAdapter(FragmentManager fm) {
-			super(fm);
-			mPageUris = new ArrayList<Uri>();
-		}
-		
-		ListPagerAdapter(ArrayList<Uri> pageUris, FragmentManager fm) {
-			super(fm);
-			mPageUris = pageUris;
-		}
-		
-		@Override
-		public Fragment getItem(int position) {
-			return ImageFragment.newInstance(mPageUris.get(position));
-		}
-		
-		@Override
-		public int getCount() {
-			return mPageUris.size();
-		}
-		
-		public void addItem(int position, Uri pageUri) {
-			mPageUris.add(position, pageUri);
-		}
-		
-		@Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
-            // Cancel any ongoing work on the fragment
-			final ImageFragment fragment = (ImageFragment) object;
-            fragment.cancelWork();
-            
-            super.destroyItem(container, position, object);
-            
-            // Remove from arraylist
-            mPageUris.remove(position);
-        }
-		
-		public ArrayList<Uri> getPageUris() {
-			return mPageUris;
-		}
-	}
 }

@@ -1,5 +1,27 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="AppTheme" parent="android:Theme.Light" />
+    
+    <style name="navbar">
+        <item name="android:layout_height">@dimen/navbar_height</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:background">@color/holo_light_blue</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+    
+    <style name="navbar_image_button">
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_gravity">center_vertical</item>
+    	<item name="android:layout_weight">1</item>
+    	<item name="android:background">@drawable/navbar_image_button_background</item>
+    </style>
+    
+    <style name="transparent_navbar">
+        <item name="android:layout_height">@dimen/navbar_height</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:background">@color/transparent</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
 
 </resources>

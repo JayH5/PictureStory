@@ -3,45 +3,97 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
     
+    <LinearLayout
+	    android:id="@+id/images_button_bar"
+	    style="@style/navbar"
+	    android:layout_alignParentTop="true"
+	    android:layout_alignParentLeft="true" >
+	    
+        <ImageButton
+            android:id="@+id/complete_images_button"
+            style="@style/navbar_image_button"
+            android:contentDescription="@string/complete_images_button_text"
+            android:src="@drawable/navigation_accept" />
+        
+        <ImageButton
+            android:id="@+id/add_image_button"
+            style="@style/navbar_image_button"
+            android:contentDescription="@string/add_image_button_text"
+            android:src="@drawable/content_new_picture" />
+             
+        <ImageButton
+        	android:id="@+id/remove_image_button"
+        	style="@style/navbar_image_button"
+        	android:contentDescription="@string/remove_image_button_text"
+        	android:src="@drawable/remove_button_image"
+        	android:state_enabled="false" />
+	    
+    </LinearLayout>        
+    
+    <LinearLayout
+        android:id="@+id/audio_button_bar"
+        style="@style/navbar"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:visibility="invisible" >
+	    
+        <ImageButton
+        	android:id="@+id/edit_images_button"
+        	style="@style/navbar_image_button"
+        	android:contentDescription="@string/edit_images_button_text"
+        	android:src="@drawable/navigation_previous_item" />
+	    
+	    <ImageButton
+        	android:id="@+id/record_button"
+        	style="@style/navbar_image_button"
+        	android:contentDescription="@string/stopped_record_button_text"
+        	android:src="@drawable/device_access_mic" />
+	    
+	    <ImageButton
+        	android:id="@+id/play_button"
+        	style="@style/navbar_image_button"
+        	android:contentDescription="@string/stopped_play_button_text"
+        	android:src="@drawable/av_play"
+        	android:state_enabled="false" />
+	    
+	</LinearLayout>
+	
+    
+    <LinearLayout
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        style="@style/navbar"
+        android:background="@color/transparent" >
+
+        <View
+            android:layout_height="fill_parent"
+        	android:layout_width="0dp"
+        	android:layout_weight="1"
+        	android:layout_gravity="center" />
+        
+        <ProgressBar
+        	android:id="@+id/record_indicator"
+        	android:layout_height="fill_parent"
+        	android:layout_width="0dp"
+        	android:layout_weight="1"
+        	android:layout_gravity="center"
+        	android:visibility="invisible" />
+        
+        <ProgressBar
+        	android:id="@+id/play_indicator"
+        	android:layout_height="fill_parent"
+        	android:layout_width="0dp"
+        	android:layout_weight="1"
+        	android:layout_gravity="center"
+        	android:visibility="invisible" />
+                
+    </LinearLayout>
+    
+    
     <android.support.v4.view.ViewPager
         android:id="@+id/pager"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_above="@+id/bottom_button_bar" />
-
-	<LinearLayout
-	    android:id="@+id/bottom_button_bar"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentBottom="true"
-	    android:layout_alignParentLeft="true"
-	    android:orientation="horizontal" >
-	    
-	    <Button
-        	android:id="@+id/addImagebutton"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_gravity="center_vertical"
-    	    android:layout_weight="1"
-        	android:text="Add image" />
-	    
-	    <Button
-        	android:id="@+id/playButton"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_gravity="center_vertical"
-    	    android:layout_weight="1"
-        	android:text="Play" />
-	    
-	    <Button
-        	android:id="@+id/recordButton"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_gravity="center_vertical"
-    	    android:layout_weight="1"
-        	android:text="Record" />
-	    
-	</LinearLayout>
-   
+        android:layout_below="@+id/images_button_bar" />
 
 </RelativeLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="pager_margin">8dp</dimen>
+    <dimen name="navbar_height">48dp</dimen>
     
 </resources>

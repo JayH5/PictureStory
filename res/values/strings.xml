@@ -1,8 +1,15 @@
 <resources>
 
     <string name="app_name">PictureStory</string>
-    <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">PictureStory</string>
+    <string name="add_image_button_text">Add image</string>
+    <string name="started_play_button_text">Stop playing</string>
+    <string name="stopped_play_button_text">Start playing</string>
+    <string name="started_record_button_text">Stop recording</string>
+    <string name="stopped_record_button_text">Start recording</string>
+    <string name="remove_image_button_text">Remove image</string>
+    <string name="complete_images_button_text">Done choosing images</string>
+    <string name="edit_images_button_text">Go back to choosing images</string>
 
 </resources>

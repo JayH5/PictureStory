@@ -247,7 +247,7 @@ public class DiskLruCache {
         final String cachePath =
                 Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED ||
                         !Utils.isExternalStorageRemovable() ?
-                        Utils.getExternalCacheDir(context).getPath() :
+                        context.getExternalCacheDir().getPath() :
                         context.getCacheDir().getPath();
 
         return new File(cachePath + File.separator + uniqueName);
