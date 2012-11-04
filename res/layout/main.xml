@@ -25,7 +25,7 @@
         	android:id="@+id/remove_image_button"
         	style="@style/navbar_image_button"
         	android:contentDescription="@string/remove_image_button_text"
-        	android:src="@drawable/remove_button_image"
+        	android:src="@drawable/remove_image"
         	android:state_enabled="false" />
 	    
     </LinearLayout>        
@@ -41,7 +41,7 @@
         	android:id="@+id/edit_images_button"
         	style="@style/navbar_image_button"
         	android:contentDescription="@string/edit_images_button_text"
-        	android:src="@drawable/navigation_previous_item" />
+        	android:src="@drawable/edit_images" />
 	    
 	    <ImageButton
         	android:id="@+id/record_button"
@@ -72,20 +72,20 @@
         	android:layout_gravity="center" />
         
         <ProgressBar
-        	android:id="@+id/record_indicator"
-        	android:layout_height="fill_parent"
-        	android:layout_width="0dp"
-        	android:layout_weight="1"
-        	android:layout_gravity="center"
-        	android:visibility="invisible" />
+            android:id="@+id/record_indicator"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:visibility="invisible" />
         
         <ProgressBar
-        	android:id="@+id/play_indicator"
-        	android:layout_height="fill_parent"
-        	android:layout_width="0dp"
-        	android:layout_weight="1"
-        	android:layout_gravity="center"
-        	android:visibility="invisible" />
+            android:id="@+id/play_indicator"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:visibility="invisible" />
                 
     </LinearLayout>
     

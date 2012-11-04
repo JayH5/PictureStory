@@ -32,12 +32,15 @@ public final class R {
         public static final int content_picture=0x7f020007;
         public static final int content_remove=0x7f020008;
         public static final int device_access_mic=0x7f020009;
-        public static final int ic_action_search=0x7f02000a;
-        public static final int ic_launcher=0x7f02000b;
-        public static final int navbar_image_button_background=0x7f02000c;
-        public static final int navigation_accept=0x7f02000d;
-        public static final int navigation_previous_item=0x7f02000e;
-        public static final int remove_button_image=0x7f02000f;
+        public static final int edit_images=0x7f02000a;
+        public static final int ic_action_search=0x7f02000b;
+        public static final int ic_launcher=0x7f02000c;
+        public static final int navbar_image_button_background=0x7f02000d;
+        public static final int navigation_accept=0x7f02000e;
+        public static final int navigation_previous_item=0x7f02000f;
+        public static final int remove_button_image=0x7f020010;
+        public static final int remove_image=0x7f020011;
+        public static final int stop=0x7f020012;
     }
     public static final class id {
         public static final int add_image_button=0x7f090003;

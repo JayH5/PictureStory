@@ -6,9 +6,13 @@ import java.io.InputStream;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 
 /**
@@ -89,7 +93,18 @@ public class ImageResizer extends ImageWorker {
 
     @Override
     protected Bitmap processBitmap(Object data) {
-        return processBitmap(Uri.parse(String.valueOf(data)));
+        String filepath = String.valueOf(data);
+        String header = filepath.substring(0, 7);
+        
+        Log.d(TAG, "Header from filepth is: " + header);
+        
+        if (header.equals("content")) {
+        	Log.d(TAG, "Filepath '" + filepath + "' detected as content uri.");
+        	return processBitmap(Uri.parse(filepath));
+        } else {
+        	Log.d(TAG, "Filepath '" + filepath + "' detected as system file path.");
+        	return processBitmap(filepath.substring(7));
+        }
     }
 
     /**
@@ -167,39 +182,29 @@ public class ImageResizer extends ImageWorker {
         	return null;
         }
         
-        return bitmap;
+        return getRotation(bitmap, uri);
 	}
     
-    /*
-    public static synchronized Bitmap decodeSampledBitmapFromUri(Uri uri, int reqWidth, int reqHeight) {
-    	Log.d(TAG, "decodeSampledBitmapUri uri: " + uri);
+    public static Bitmap getRotation(Bitmap bitmap, Uri uri) {
+    	// Unfortunately we have to do an entire database query just to get the orientation
+    	String[] projection = { MediaStore.Images.Media.ORIENTATION };
+        Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(projection[0]);
+        cursor.moveToFirst();
+        int orientation = cursor.getInt(column_index);
+        cursor.close();
+        
+        Log.d(TAG, "Orientation detected from content resolver as: " + orientation);
+        
+        if (orientation > 0) {
+        	Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+        	bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        }
     	
-    	final BitmapFactory.Options options = new BitmapFactory.Options();
-    	options.inJustDecodeBounds = true;
-    	
-    	InputStream is = null;
-    	try {
-    		is = mContext.getContentResolver().openInputStream(uri);
-    	} catch (FileNotFoundException fnfe) {
-    		Log.e(TAG, "File not found exception!", fnfe);
-    	}
-    	
-    	BitmapFactory.decodeStream(is, null, options);
-    	options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-    	
-    	// Now decode full bitmap
-    	options.inJustDecodeBounds = false;
-    	Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
-    	
-    	try {
-    		is.close();
-    	} catch (IOException ioe) {
-    		Log.e(TAG, "I/O exception!", ioe);
-    	}
-    		
     	return bitmap;
-    }*/
-
+    }
+    
     /**
      * Decode and sample down a bitmap from a file to the requested width and height.
      *
@@ -222,7 +227,45 @@ public class ImageResizer extends ImageWorker {
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(filename, options);
+        
+        Bitmap bitmap = BitmapFactory.decodeFile(filename, options);
+        return getRotation(bitmap, filename);
+    }
+    
+    public static Bitmap getRotation(Bitmap bitmap, String filepath) {
+    	ExifInterface exif = null;
+    	try {
+        	exif = new ExifInterface(filepath);
+    	} catch (IOException ioe) {
+    		Log.e(TAG, "IO Exception reading image EXIF data. Uri: " + filepath);
+    	}
+    	int orientationCode = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0);
+    	
+    	int orientation;
+    	switch(orientationCode) {
+    	case ExifInterface.ORIENTATION_ROTATE_90:
+    		orientation = 90;
+    		break;
+    	case ExifInterface.ORIENTATION_ROTATE_180:
+    		orientation = 180;
+    		break;
+    	case ExifInterface.ORIENTATION_ROTATE_270:
+    		orientation = 270;
+    		break;
+    	default:
+    		orientation = 0;
+    		break;
+    	}
+    	
+    	Log.d(TAG, "Orientation detected from EXIF data as: " + orientation);
+    	
+    	if (orientation > 0) {
+        	Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+        	bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        }
+    	
+    	return bitmap;
     }
 
     /**

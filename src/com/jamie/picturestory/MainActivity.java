@@ -233,13 +233,18 @@ public class MainActivity extends FragmentActivity {
 
     	if (requestCode == IMAGE_PICK) {
         	if(resultCode == RESULT_OK) {
-        		
+        		int newPosition = 0;
+        		if (mAdapter.getCount() > 0) {
+        			newPosition = mPager.getCurrentItem() + 1;
+        		}
+        		Log.d(TAG, "Insert new item position: " + newPosition);
         		if (imageReturnedIntent != null) {
         			Uri selectedImage = imageReturnedIntent.getData();
-	       			mAdapter.addItem(mAdapter.getCount(), selectedImage);
+	       			mAdapter.addItem(newPosition, selectedImage);
         		} else { // The camera is silly and returns a null URI
-        			mAdapter.addItem(mAdapter.getCount(), Uri.parse(mLastCameraUri));
+        			mAdapter.addItem(newPosition, Uri.parse(mLastCameraUri));
         		}
+        		mPager.setCurrentItem(newPosition, true);
         		mRemoveImageButton.setEnabled(true);
         	} else if (resultCode == RESULT_CANCELED) {
         		// Do nothing?
@@ -315,7 +320,7 @@ public class MainActivity extends FragmentActivity {
             
             startTransitions();
             
-            mPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.av_stop));
+            mPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.stop));
             mPlayButton.setContentDescription(getResources().getString(R.string.started_play_button_text));
             
             mPlayIndicator.setVisibility(View.VISIBLE);
@@ -376,7 +381,7 @@ public class MainActivity extends FragmentActivity {
         mStoryTransitions = new ArrayList<StoryTransition>();
         mStoryTransitions.add(new StoryTransition(mPager.getCurrentItem(), 0));
         
-        mRecordButton.setImageDrawable(getResources().getDrawable(R.drawable.av_stop));
+        mRecordButton.setImageDrawable(getResources().getDrawable(R.drawable.stop));
         mRecordButton.setContentDescription(getResources().getString(R.string.started_record_button_text));
         
         mRecordIndicator.setVisibility(View.VISIBLE);

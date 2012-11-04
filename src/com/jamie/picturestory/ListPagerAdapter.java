@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 
 public class ListPagerAdapter extends FragmentStatePagerAdapter {
 	private ArrayList<Uri> mPageUris;
-	private boolean itemRemoved;
 	
 	ListPagerAdapter(FragmentManager fm) {
 		super(fm);
@@ -35,7 +34,6 @@ public class ListPagerAdapter extends FragmentStatePagerAdapter {
 	
 	public void addItem(int position, Uri pageUri) {
 		mPageUris.add(position, pageUri);
-		itemRemoved = false;
 		notifyDataSetChanged();
 	}
 	
@@ -45,7 +43,6 @@ public class ListPagerAdapter extends FragmentStatePagerAdapter {
 		}
 		
 		mPageUris.remove(position);
-		itemRemoved = true;
 		notifyDataSetChanged();
 		return true;
 	}
@@ -59,13 +56,10 @@ public class ListPagerAdapter extends FragmentStatePagerAdapter {
         super.destroyItem(container, position, object);
     }
 	
+	// Ensures that new fragments are created upon add/delete
 	@Override
 	public int getItemPosition(Object object) {
-		if (itemRemoved) {
-			return PagerAdapter.POSITION_NONE;
-		} else {
-			return super.getItemPosition(object);
-		}
+		return PagerAdapter.POSITION_NONE;
 	}
 	
 	public ArrayList<Uri> getPageUris() {
