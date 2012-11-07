@@ -12,6 +12,7 @@
         <ImageButton
             android:id="@+id/complete_images_button"
             style="@style/navbar_image_button"
+            android:clickable="false"
             android:contentDescription="@string/complete_images_button_text"
             android:src="@drawable/navigation_accept" />
         
@@ -22,11 +23,11 @@
             android:src="@drawable/content_new_picture" />
              
         <ImageButton
-        	android:id="@+id/remove_image_button"
-        	style="@style/navbar_image_button"
-        	android:contentDescription="@string/remove_image_button_text"
-        	android:src="@drawable/remove_image"
-        	android:state_enabled="false" />
+            android:id="@+id/remove_image_button"
+            style="@style/navbar_image_button"
+            android:clickable="false"
+            android:contentDescription="@string/remove_image_button_text"
+            android:src="@drawable/remove_image" />
 	    
     </LinearLayout>        
     
@@ -50,11 +51,11 @@
         	android:src="@drawable/device_access_mic" />
 	    
 	    <ImageButton
-        	android:id="@+id/play_button"
-        	style="@style/navbar_image_button"
-        	android:contentDescription="@string/stopped_play_button_text"
-        	android:src="@drawable/av_play"
-        	android:state_enabled="false" />
+	        android:id="@+id/play_button"
+	        style="@style/navbar_image_button"
+	        android:clickable="false"
+	        android:contentDescription="@string/stopped_play_button_text"
+	        android:src="@drawable/av_play" />
 	    
 	</LinearLayout>
 	
@@ -86,7 +87,7 @@
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:visibility="invisible" />
-                
+        
     </LinearLayout>
     
     

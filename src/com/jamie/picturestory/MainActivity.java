@@ -3,6 +3,8 @@ package com.jamie.picturestory;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -30,16 +32,19 @@ public class MainActivity extends FragmentActivity {
 	private static final String SAVE_MODE_KEY = "Mode";
 	private static final String SAVE_TRANSITIONS_KEY = "Transitions";
 	private static final String SAVE_CAMERA_URI = "Camera Uri";
+	private static final String SAVE_HAS_RECORDED_KEY = "Has recorded";
 	
 	private static final int IMAGE_PICK = 0;
 	
-	// Viewpager and image class variables
+	// Viewpager and associated objects
 	private ViewPager mPager;
 	private ListPagerAdapter mAdapter;
 	private ImageResizer mImageWorker;
 	
+	// Records whether we're in image editing or recording mode
 	private int mMode;
 	
+	// UI objects
 	private LinearLayout mImagesButtonBar;
 	private ImageButton mCompleteImagesButton;
 	private ImageButton mAddImageButton;
@@ -67,6 +72,9 @@ public class MainActivity extends FragmentActivity {
     private boolean mStartPlaying = true;
     private MediaPlayer mPlayer = null;
     
+    private boolean mHasRecorded = false;
+    
+    // Need to keep track of uris provided to camera because it doesn't return them
     private String mLastCameraUri = "";
 	
     @Override
@@ -94,6 +102,7 @@ public class MainActivity extends FragmentActivity {
         	mMode = savedInstanceState.getInt(SAVE_MODE_KEY);
         	mStoryTransitions = savedInstanceState.getParcelableArrayList(SAVE_TRANSITIONS_KEY);
         	mLastCameraUri = savedInstanceState.getString(SAVE_CAMERA_URI);
+        	mHasRecorded = savedInstanceState.getBoolean(SAVE_HAS_RECORDED_KEY);
         } else {
         	mAdapter = new ListPagerAdapter(getSupportFragmentManager());
         	mAudioFilePath = Utils.getOutputAudioFilePath(getApplicationContext());
@@ -115,7 +124,7 @@ public class MainActivity extends FragmentActivity {
             }
         });
         
-        // All the UI elements
+        // ALL the UI elements
         mImagesButtonBar = (LinearLayout) findViewById(R.id.images_button_bar);
         mAudioButtonBar = (LinearLayout) findViewById(R.id.audio_button_bar);
         
@@ -133,6 +142,7 @@ public class MainActivity extends FragmentActivity {
         	mMode = 0;
         }
         
+        // Add images mode
         mCompleteImagesButton = (ImageButton) findViewById(R.id.complete_images_button);
         mCompleteImagesButton.setOnClickListener(new View.OnClickListener() {
 			
@@ -164,23 +174,17 @@ public class MainActivity extends FragmentActivity {
         	mRemoveImageButton.setEnabled(false);
         }
         
-        // Add audio buttons
-        
+        // Record mode buttons        
         mEditImagesButton = (ImageButton) findViewById(R.id.edit_images_button);
         mEditImagesButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				toggleMode();
-			}
-		});
-        
-        mPlayButton = (ImageButton) findViewById(R.id.play_button);
-        mPlayButton.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				togglePlayback();
+				if (mHasRecorded) {
+					confirmModeChange();
+				} else {
+					toggleMode();
+				}
 			}
 		});
         
@@ -193,38 +197,20 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
         
+        mPlayButton = (ImageButton) findViewById(R.id.play_button);
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				togglePlayback();
+			}
+		});
+        if (mHasRecorded) {
+        	mPlayButton.setEnabled(true);
+        }
+                  
         mRecordIndicator = (ProgressBar) findViewById(R.id.record_indicator);
         mPlayIndicator = (ProgressBar) findViewById(R.id.play_indicator);
-        
-    }
-    
-    private void removeCurrentItem() {
-    	int position = mPager.getCurrentItem();
-    	if (position > 0) {
-    		mPager.setCurrentItem(position - 1, true);
-    	}
-    	mAdapter.removeItem(position);
-    	if (mAdapter.getCount() == 0) {
-    		mRemoveImageButton.setEnabled(false);
-    	}
-    }
-    
-    private void toggleMode() {
-    	switch(mMode) {
-        case 0:
-        	mImagesButtonBar.setVisibility(View.INVISIBLE);
-        	mAudioButtonBar.setVisibility(View.VISIBLE);
-        	mMode = 1;
-        	break;
-        case 1:
-        	mImagesButtonBar.setVisibility(View.VISIBLE);
-        	mAudioButtonBar.setVisibility(View.INVISIBLE);
-        	mMode = 0;
-        	break;
-        default:
-        	// Shouldn't happen
-        	mMode = 0;
-        }
     }
     
     @Override
@@ -246,11 +232,11 @@ public class MainActivity extends FragmentActivity {
         		}
         		mPager.setCurrentItem(newPosition, true);
         		mRemoveImageButton.setEnabled(true);
+        		mCompleteImagesButton.setEnabled(true);
         	} else if (resultCode == RESULT_CANCELED) {
         		// Do nothing?
         	}
     	}
-    	
 	}
     
     @Override
@@ -260,6 +246,7 @@ public class MainActivity extends FragmentActivity {
     	outState.putInt(SAVE_MODE_KEY, mMode);
     	outState.putParcelableArrayList(SAVE_TRANSITIONS_KEY, mStoryTransitions);
     	outState.putString(SAVE_CAMERA_URI, mLastCameraUri);
+    	outState.putBoolean(SAVE_HAS_RECORDED_KEY, mHasRecorded);
         super.onSaveInstanceState(outState);
     }
     
@@ -281,6 +268,39 @@ public class MainActivity extends FragmentActivity {
         	mHandler.removeCallbacks(null);
         }
     }
+    
+    private void removeCurrentItem() {
+    	int position = mPager.getCurrentItem();
+    	if (position > 0) {
+    		mPager.setCurrentItem(position - 1, true);
+    	}
+    	mAdapter.removeItem(position);
+    	if (mAdapter.getCount() == 0) {
+    		mRemoveImageButton.setEnabled(false);
+    		mCompleteImagesButton.setEnabled(false);
+    	}
+    }
+    
+    private void toggleMode() {
+    	switch(mMode) {
+        case 0:
+        	mImagesButtonBar.setVisibility(View.INVISIBLE);
+        	mAudioButtonBar.setVisibility(View.VISIBLE);
+        	mMode = 1;
+        	break;
+        case 1:
+        	mImagesButtonBar.setVisibility(View.VISIBLE);
+        	mAudioButtonBar.setVisibility(View.INVISIBLE);
+        	mMode = 0;
+        	mHasRecorded = false;
+        	break;
+        default:
+        	// Shouldn't happen
+        	mMode = 0;
+        }
+    }
+    
+    
     
     public ImageWorker getImageWorker() {
     	return mImageWorker;
@@ -336,7 +356,7 @@ public class MainActivity extends FragmentActivity {
     	
     	// Queue all the transitions in a handler
     	mHandler = new Handler();
-        for (int i = 1; i < mStoryTransitions.size(); i++) {
+        for (int i = 1; i < mStoryTransitions.size() - 1; i++) {
         	final StoryTransition transition = mStoryTransitions.get(i);
         	Runnable runner = new Runnable() {
         		public void run() {
@@ -394,19 +414,21 @@ public class MainActivity extends FragmentActivity {
         mRecorder.release();
         mRecorder = null;
         
+        mStoryTransitions.add(new StoryTransition(-1, mTimer.getTime()));
+        
         mRecordButton.setImageDrawable(getResources().getDrawable(R.drawable.device_access_mic));
         mRecordButton.setContentDescription(getResources().getString(R.string.stopped_record_button_text));
         
         mRecordIndicator.setVisibility(View.INVISIBLE);
         
         mPlayButton.setEnabled(true);
+        mHasRecorded = true;
     }
     
     private void openImageIntent() {
         // Camera intent
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         Uri photoUri = Utils.getOutputPhotoFileUri(); // create a file to save the image
-        //Log.d(TAG, "Camera intent uri: " + fileUri);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
         mLastCameraUri = photoUri.toString();
         
@@ -420,5 +442,20 @@ public class MainActivity extends FragmentActivity {
         
         // Launch the intent
         startActivityForResult(chooserIntent, IMAGE_PICK);
+    }
+    
+    private void confirmModeChange() {
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setMessage(R.string.dialog_message)
+    			.setTitle(R.string.dialog_title)
+    			.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				toggleMode();
+			}
+		})
+    			.setNegativeButton(R.string.cancel, null);
+    	builder.show();
     }
 }

@@ -59,6 +59,27 @@ public abstract class ImageWorker {
             task.execute(data);
         }
     }
+    
+    public Bitmap getBitmapSynchronous(Object data) {
+    	Bitmap bitmap = null;
+    	
+    	// If there is an image cache we should check in it for image
+    	if (mImageCache != null) {
+    		bitmap = mImageCache.getBitmapFromMemCache(String.valueOf(data));
+    		
+    		// If bitmap wasn't found in memory, check disk cache
+            if (bitmap == null) {
+            	bitmap = mImageCache.getBitmapFromDiskCache(String.valueOf(data));
+            }
+    	}
+    	
+    	// If bitmap still wasn't found it'll have to be fetched fresh
+    	if (bitmap == null) {
+    		bitmap = processBitmap(data);
+    	}
+    	
+    	return bitmap;
+    }
 
     /**
      * Set placeholder bitmap that shows when the the background thread is running.

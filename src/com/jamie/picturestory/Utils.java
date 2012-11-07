@@ -115,7 +115,7 @@ public class Utils {
     	// Create the storage directory if it does not exist
     	if (!mediaStorageDir.exists()) {
     		if (!mediaStorageDir.mkdirs()) { // Media storage directory made -here-
-    			Log.e(TAG, "failed to create directory");
+    			Log.e(TAG, "Failed to create directory for photos.");
     			return null;
     		}
     	}
@@ -125,6 +125,25 @@ public class Utils {
     	File mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
 
     	return Uri.fromFile(mediaFile);
+    }
+    
+    public static String getOutputVideoFilePath() {
+    	File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+				Environment.DIRECTORY_MOVIES), "PictureStory");
+    	
+    	// Create the storage directory if it does not exist
+    	if (!mediaStorageDir.exists()) {
+    		if (!mediaStorageDir.mkdirs()) { // Media storage directory made -here-
+    			Log.e(TAG, "Failed to create directory for videos.");
+    			return null;
+    		}
+    	}
+    	
+    	// Create a media file name
+    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    	String filepath = mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".3gp";
+    	
+    	return filepath;
     }
     
     public static String getOutputAudioFilePath(Context cxt) {

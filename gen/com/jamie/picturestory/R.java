@@ -31,16 +31,18 @@ public final class R {
         public static final int content_new_picture=0x7f020006;
         public static final int content_picture=0x7f020007;
         public static final int content_remove=0x7f020008;
-        public static final int device_access_mic=0x7f020009;
-        public static final int edit_images=0x7f02000a;
-        public static final int ic_action_search=0x7f02000b;
-        public static final int ic_launcher=0x7f02000c;
-        public static final int navbar_image_button_background=0x7f02000d;
-        public static final int navigation_accept=0x7f02000e;
-        public static final int navigation_previous_item=0x7f02000f;
-        public static final int remove_button_image=0x7f020010;
-        public static final int remove_image=0x7f020011;
-        public static final int stop=0x7f020012;
+        public static final int content_save=0x7f020009;
+        public static final int device_access_mic=0x7f02000a;
+        public static final int edit_images=0x7f02000b;
+        public static final int ic_action_search=0x7f02000c;
+        public static final int ic_launcher=0x7f02000d;
+        public static final int images_slideshow=0x7f02000e;
+        public static final int navbar_image_button_background=0x7f02000f;
+        public static final int navigation_accept=0x7f020010;
+        public static final int navigation_previous_item=0x7f020011;
+        public static final int remove_button_image=0x7f020012;
+        public static final int remove_image=0x7f020013;
+        public static final int stop=0x7f020014;
     }
     public static final class id {
         public static final int add_image_button=0x7f090003;
@@ -67,9 +69,13 @@ public final class R {
     public static final class string {
         public static final int add_image_button_text=0x7f060003;
         public static final int app_name=0x7f060000;
+        public static final int cancel=0x7f06000e;
         public static final int complete_images_button_text=0x7f060009;
+        public static final int dialog_message=0x7f06000b;
+        public static final int dialog_title=0x7f06000c;
         public static final int edit_images_button_text=0x7f06000a;
         public static final int menu_settings=0x7f060001;
+        public static final int ok=0x7f06000d;
         public static final int remove_image_button_text=0x7f060008;
         public static final int started_play_button_text=0x7f060004;
         public static final int started_record_button_text=0x7f060006;

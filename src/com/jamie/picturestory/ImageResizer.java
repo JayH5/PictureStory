@@ -181,7 +181,7 @@ public class ImageResizer extends ImageWorker {
         	Log.e(TAG, "IO exception during image bounds decode. Uri: " + uri.toString());
         	return null;
         }
-        
+                
         return getRotation(bitmap, uri);
 	}
     

@@ -11,5 +11,9 @@
     <string name="remove_image_button_text">Remove image</string>
     <string name="complete_images_button_text">Done choosing images</string>
     <string name="edit_images_button_text">Go back to choosing images</string>
+    <string name="dialog_message">If you change the images your recorded slideshow will be affected.</string>
+    <string name="dialog_title">Warning</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 
 </resources>
