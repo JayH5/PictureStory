@@ -19,6 +19,7 @@ package com.jamie.picturestory;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
@@ -109,7 +110,7 @@ public class Utils {
     	}
 
     	// Create a media file name
-    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
     	File mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
 
     	return Uri.fromFile(mediaFile);
@@ -128,7 +129,7 @@ public class Utils {
     	}
     	
     	// Create a media file name
-    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
     	String filepath = mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".3gp";
     	
     	return filepath;
@@ -138,7 +139,7 @@ public class Utils {
     	String mediaStorageDir = cxt.getExternalFilesDir(null).getAbsolutePath();
 
     	// Create a media file name
-    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    	String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
     	mediaStorageDir = mediaStorageDir + File.separator + "REC_" + timeStamp + ".3gp";
 
     	Log.d(TAG, "Uri calculated for audio recording: " + mediaStorageDir);

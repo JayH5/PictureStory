@@ -84,22 +84,12 @@ public class ImageResizer extends ImageWorker {
     public void setImageSize(int size) {
         setImageSize(size, size);
     }
-
-    /**
-     * The main processing method. This happens in a background task. In this case we are just
-     * sampling down the bitmap and returning it from a resource.
-     *
-     * @param resId
-     * @return
-     */
-    private Bitmap processBitmap(int resId) {
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "processBitmap - " + resId);
-        }
-        return decodeSampledBitmapFromResource(
-                mContext.getResources(), resId, mImageWidth, mImageHeight);
-    }
     
+    /**
+     * The main processing methods. These happen in a background task. In this case we are just
+     * sampling down the bitmap and returning it from the resolver or from a file.
+     *
+     */
     private Bitmap processBitmap(String file) {
     	return decodeSampledBitmapFromFile(file, mImageWidth, mImageHeight);
     }
