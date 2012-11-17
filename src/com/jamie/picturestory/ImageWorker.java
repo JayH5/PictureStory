@@ -40,7 +40,7 @@ public abstract class ImageWorker {
     private Bitmap mLoadingBitmap;
     private boolean mExitTasksEarly = false;
 
-    protected static Context mContext;
+    protected Context mContext;
 
     protected ImageWorker(Context context) {
         mContext = context;

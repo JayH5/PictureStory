@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -104,7 +105,8 @@ public class ImageResizer extends ImageWorker {
     }
     
     private Bitmap processBitmap(Uri uri) {
-    	return decodeSampledBitmapFromUri(uri, mImageWidth, mImageHeight);
+    	return decodeSampledBitmapFromResolver(
+    			mContext.getContentResolver(), uri, mImageWidth, mImageHeight);
     }
 
     @Override
@@ -149,13 +151,13 @@ public class ImageResizer extends ImageWorker {
         return BitmapFactory.decodeResource(res, resId, options);
     }
     
-    public static synchronized Bitmap decodeSampledBitmapFromUri(Uri uri,
-			int reqWidth, int reqHeight) {
+    public static synchronized Bitmap decodeSampledBitmapFromResolver(
+    		ContentResolver resolver, Uri uri, int reqWidth, int reqHeight) {
 		
 		// Get InputStream for the Uri
     	InputStream input = null;
     	try {
-        input = mContext.getContentResolver().openInputStream(uri);
+        input = resolver.openInputStream(uri);
     	}
     	catch (FileNotFoundException fnfe) {
     		Log.e(TAG, "File not found exception during image bounds decode. Uri: " 
@@ -180,7 +182,7 @@ public class ImageResizer extends ImageWorker {
 
         // Now decode bitmap with inSampleSize set
         try {
-        	input = mContext.getContentResolver().openInputStream(uri);
+        	input = resolver.openInputStream(uri);
         }
         catch (FileNotFoundException fnfe) {
         	Log.e(TAG, "File not found exception during image load. Uri: " + uri.toString());
@@ -198,13 +200,13 @@ public class ImageResizer extends ImageWorker {
         	return null;
         }
                 
-        return getRotation(bitmap, uri);
+        return getRotation(resolver, bitmap, uri);
 	}
     
-    public static Bitmap getRotation(Bitmap bitmap, Uri uri) {
+    public static Bitmap getRotation(ContentResolver resolver, Bitmap bitmap, Uri uri) {
     	// Unfortunately we have to do an entire database query just to get the orientation
     	String[] projection = { MediaStore.Images.Media.ORIENTATION };
-        Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null);
+        Cursor cursor = resolver.query(uri, projection, null, null, null);
         int column_index = cursor.getColumnIndexOrThrow(projection[0]);
         cursor.moveToFirst();
         int orientation = cursor.getInt(column_index);
